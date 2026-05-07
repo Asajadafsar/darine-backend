@@ -145,3 +145,5 @@ SIMPLE_JWT = {
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
+ALLOWED_HOSTS = ['193.5.44.190', 'localhost', '127.0.0.1']
+DEBUG = False

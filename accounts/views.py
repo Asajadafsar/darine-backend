@@ -6,8 +6,10 @@ from rest_framework import status
 from rest_framework.permissions import AllowAny, IsAuthenticated # اضافه شد برای باز کردن دسترسی عمومی
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth import authenticate
-
+from rest_framework import serializers
 from .models import BankCard, User, OTPRequest
+
+
 from .serializers import (
     BankCardSerializer,
     ChangeMobileConfirmSerializer,
