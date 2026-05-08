@@ -20,10 +20,9 @@ def get_live_silver_price():
         response = requests.get(url, timeout=10)
         if response.status_code == 200:
             data = response.json()
-            # با توجه به دیتای ارسالی شما: {"price":"394.1", ...}
+            # توجه: اینجا فقط دیتای خام رو می‌گیریم، 
+            # اگر در طلاینه هم می‌خوای قیمت به تومان باشه، مثل فایل نقرینه ضرب در ۱۰۰۰ کن
             return Decimal(str(data['price']))
     except Exception as e:
         print(f"Error fetching silver price: {e}")
-    
-    # مقدار بازگشتی در صورت خطا (می‌تونی برای تست یه عدد ثابت بذاری)
-    return Decimal('394.1')
+    return None

@@ -1,11 +1,13 @@
 from django.urls import path
-from .views import BuyGold, DepositMoney, GiftCardOrderView, PriceAlertDeleteView, PriceAlertView, RedeemGiftCardView, ReferralDashboardView, ReportsView, SellGold, UserAssets, UserGiftCardListView, WithdrawMoney
+from .views import BuyGold, DepositMoney, GiftCardOrderView, GoldDashboardAPI, GoldWalletAPI, PriceAlertDeleteView, PriceAlertView, RedeemGiftCardView, ReferralDashboardView, ReportsView, SellGold, UserAssets, UserGiftCardListView, WithdrawMoney
 from .views import ProductListView, CartView, CheckoutView, OrderHistoryView
 
 
 
 
 urlpatterns = [
+    path('dashboard/', GoldDashboardAPI.as_view(), name='gold-dashboard-new'),
+    path('wallet/', GoldWalletAPI.as_view(), name='gold-wallet-new'),
     path('buy/', BuyGold.as_view(), name='buy_gold'),
     path('sell/', SellGold.as_view(), name='sell_gold'),
     path('assets/', UserAssets.as_view(), name='user_assets'),

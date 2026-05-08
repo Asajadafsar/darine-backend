@@ -22,8 +22,6 @@ from decimal import Decimal
 from rest_framework import status
 from .utils import get_live_gold_price
 from django.db.models import Sum
-
-
 from decimal import Decimal
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -31,6 +29,122 @@ from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from .models import GoldTransaction, GoldInventory, Wallet, ReferralEarning, FinancialTransaction
 from .utils import get_live_gold_price
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticated
+from django.db.models import Sum
+from decimal import Decimal
+from .models import GoldInventory, GoldTransaction, Wallet, FinancialTransaction, GiftCard
+from .utils import get_live_gold_price # فرض بر اینکه این تابع را دارید
+
+
+
+
+# --- داشبورد طلاینه (تحلیلی) ---
+class GoldDashboardAPI(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+        gold_price = get_live_gold_price() # قیمت لحظه‌ای طلا ۱۸ یا ۲۴
+        
+        gold_inv, _ = GoldInventory.objects.get_or_create(user=user)
+        wallet, _ = Wallet.objects.get_or_create(user=user)
+
+        gold_balance = Decimal(str(gold_inv.balance))
+        toman_balance = Decimal(str(wallet.balance))
+        gold_value = gold_balance * gold_price
+
+        # دیتای نمودار (استاتیک برای فرانت)
+        chart_data = {
+            "labels": ["01/20", "01/25", "02/05", "02/18"],
+            "values": [2800000, 2950000, 3100000, 3250000], # نمونه قیمت طلا
+            "highest": 3300000,
+            "lowest": 2700000,
+            "change_percent": 4.2
+        }
+
+        return Response({
+            "assets": {
+                "total_assets_value": round(gold_value + toman_balance),
+                "gold_balance_gr": round(gold_balance, 5),
+                "toman_balance": round(toman_balance)
+            },
+            "price_info": {
+                "current_price": gold_price,
+                "change_percent": 4.2,
+                "chart": chart_data
+            }
+        })
+
+# --- کیف پول طلاینه (عملیاتی و فعالیت‌ها) ---
+class GoldWalletAPI(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+        gold_price = get_live_gold_price()
+        
+        gold_inv, _ = GoldInventory.objects.get_or_create(user=user)
+        wallet, _ = Wallet.objects.get_or_create(user=user)
+        
+        gold_balance = Decimal(str(gold_inv.balance))
+        toman_balance = Decimal(str(wallet.balance))
+        gold_value = gold_balance * gold_price
+
+        # ۱. مجموع دارایی
+        total_assets = gold_value + toman_balance
+
+        # ۲. محاسبه سود (تفاضل ارزش فعلی از کل مبالغ خرید)
+        total_spent = GoldTransaction.objects.filter(
+            user=user, type='BUY', is_completed=True
+        ).aggregate(Sum('total_amount'))['total_amount__sum'] or 0
+        profit = gold_value - Decimal(str(total_spent))
+
+        # ۳. طلا و تومان در انتظار پردازش
+        pending_toman = FinancialTransaction.objects.filter(
+            user=user, status='PENDING', type='WITHDRAW'
+        ).aggregate(Sum('amount'))['amount__sum'] or 0
+        
+        pending_gold = GoldTransaction.objects.filter(
+            user=user, is_completed=False, type='BUY'
+        ).aggregate(Sum('amount_gr'))['amount_gr__sum'] or 0
+
+        # ۴. کارت‌های هدیه (ارزش ریالی کارت‌های فعال شده)
+        gift_cards_value = GiftCard.objects.filter(
+            activated_by=user
+        ).aggregate(Sum('weight'))['weight__sum'] or 0
+        gift_cards_toman = gift_cards_value * gold_price
+
+        return Response({
+            "wallet_header": {
+                "total_assets_value": round(total_assets),
+                "description": "ارزش دارایی مجموع دارایی طلا و دارایی نقدی شماست",
+                "gold_balance_gr": round(gold_balance, 5),
+                "toman_balance": round(toman_balance)
+            },
+            "activity_summary": {
+                "total_assets": round(total_assets),
+                "profit": round(profit),
+                "withdrawn_gold_gr": 0, # فیلد کمکی اگر در مدل اینونتوری باشد
+                "gift_cards_toman": round(gift_cards_toman),
+                "pending_toman": round(pending_toman),
+                "pending_gold_gr": round(pending_gold, 5)
+            },
+            "current_gold_price": gold_price
+        })
+
+
+
+
+
+
+
+
+
+
+
+
 
 class BuyGold(APIView):
     permission_classes = [IsAuthenticated]
