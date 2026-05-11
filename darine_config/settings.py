@@ -1,24 +1,18 @@
-
-
+import os
 from pathlib import Path
 from datetime import timedelta
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-jqr0%aw^1q2pgn$hr!mld%++q*7r6!z@2y%i5p+&14=g=a1g*('
+# SECRET_KEY = 'django-insecure-jqr0%aw^1q2pgn$hr!mld%++q*7r6!z@2y%i5p+&14=g=a1g*('
+SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-temp-key-for-dev')
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
-
-ALLOWED_HOSTS = []
+DEBUG = os.environ.get('DEBUG', 'False') == 'True'
 
 
-# Application definition
+
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -28,12 +22,14 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
+    'corsheaders',
     'accounts',
     'gold_app',  
     'silver_app',
 ]
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -74,6 +70,7 @@ REST_FRAMEWORK = {
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
 
 
+ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1,193.5.44.190').split(',')
 
 
 
@@ -82,8 +79,8 @@ DATABASES = {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'darine_db',
         'USER': 'postgres',
-        'PASSWORD': 'Aliafsar31344',  
-        'HOST': '127.0.0.1',
+        'PASSWORD': os.environ.get('DB_PASSWORD', ''), 
+        'HOST': os.environ.get('DB_HOST', 'localhost'),
         'PORT': '5432',
     }
 }
@@ -139,5 +136,32 @@ SIMPLE_JWT = {
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
-ALLOWED_HOSTS = ['193.5.44.190', 'localhost', '127.0.0.1']
-DEBUG = False
+# DEBUG = False
+CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:3000",          # React dev
+    "http://localhost:8080",          # Vue dev
+    "http://127.0.0.1:5500",          # Live server
+    "http://193.5.44.190:8000",       # خود سرور
+]
+CORS_ALLOW_HEADERS = [
+    'accept',
+    'accept-encoding',
+    'authorization',
+    'content-type',
+    'dnt',
+    'origin',
+    'user-agent',
+    'x-csrftoken',
+    'x-requested-with',
+]
+CORS_ALLOW_METHODS = [
+    'DELETE',
+    'GET',
+    'OPTIONS',
+    'PATCH',
+    'POST',
+    'PUT',
+]
+CORS_ALLOW_CREDENTIALS = True
+CORS_PREFLIGHT_MAX_AGE = 86400  # 24 ساعت
